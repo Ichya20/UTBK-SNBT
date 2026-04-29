@@ -2,6 +2,7 @@ package com.aknaf.utbk_snbt.model
 
 data class QuestionModel(
     val id: String = "",
+    val subject: String = "", // TAMBAHKAN INI WOK!
     val question: String = "",
     val optionA: String = "",
     val optionB: String = "",

@@ -5,6 +5,9 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
 
     <application
         android:allowBackup="true"
@@ -52,6 +55,11 @@
 
         <activity
             android:name=".ChatActivity"
+            android:exported="false" />
+
+        <receiver
+            android:name=".utils.StudyReminderReceiver"
+            android:enabled="true"
             android:exported="false" />
 
     </application>
