@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#64B2FF"
+    android:padding="20dp">
+
+    <TextView
+        android:id="@+id/tvInstruksi"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Masukkan Kode OTP"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="100dp"
+        android:textColor="#FFFFFF"/>
+
+    <EditText
+        android:id="@+id/etInputOtp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/tvInstruksi"
+        android:layout_marginTop="30dp"
+        android:hint="6 Digit Kode"
+        android:inputType="number"
+        android:maxLength="6"
+        android:gravity="center"
+        android:background="@android:drawable/edit_text"/>
+
+    <Button
+        android:id="@+id/btnVerifikasi"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/etInputOtp"
+        android:layout_marginTop="20dp"
+        android:text="Verifikasi Sekarang"
+        android:backgroundTint="#5A67D8"/>
+
+</RelativeLayout>

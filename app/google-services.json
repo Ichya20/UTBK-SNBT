@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "429157683797",
+    "project_id": "utbk-snbt-app",
+    "storage_bucket": "utbk-snbt-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:429157683797:android:d832b133443a1baa823adc",
+        "android_client_info": {
+          "package_name": "com.aknaf.utbk_snbt"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "429157683797-e1ldj1n2rhgbv0bj3t4v2rjd1m2pqhdc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aknaf.utbk_snbt",
+            "certificate_hash": "8224c9fda7dc407b033a1d5ddc2b7e9614bac82c"
+          }
+        },
+        {
+          "client_id": "429157683797-q4c51mpp2eehmd31ojft504gqdmkfrit.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.aknaf.utbk_snbt",
+            "certificate_hash": "6e61b6108f4ac53139d165f270fa6666e5f4981b"
+          }
+        },
+        {
+          "client_id": "429157683797-k2iv0ckt6a7t27lnlt0h1oe9dbujnk82.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA76m6bwxHCJzkfF5EMisFrrAKpDT3jnCw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "429157683797-k2iv0ckt6a7t27lnlt0h1oe9dbujnk82.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
