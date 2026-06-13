@@ -3,26 +3,29 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="8dp">
+    android:paddingVertical="6dp"
+    android:paddingHorizontal="8dp">
 
     <LinearLayout
         android:id="@+id/layoutBot"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="start"
-        android:background="#FFFFFF"
-        android:elevation="2dp"
-        android:padding="12dp"
+        android:background="@drawable/bg_chat_bot"
         android:layout_marginEnd="60dp"
-        android:layout_marginBottom="4dp">
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="12dp"
+        android:elevation="2dp">
 
         <TextView
             android:id="@+id/tvBotMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#000000"
-            android:textSize="16sp"
-            android:text="Pesan dari AI muncul di sini" />
+            android:textColor="#1E293B"
+            android:textSize="15sp"
+            android:lineSpacingExtra="4dp"
+            android:text="Pesan dari AI..." />
     </LinearLayout>
 
     <LinearLayout
@@ -30,19 +33,21 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end"
-        android:background="#DCF8C6"
-        android:elevation="2dp"
-        android:padding="12dp"
+        android:background="@drawable/bg_chat_user"
         android:layout_marginStart="60dp"
-        android:layout_marginBottom="4dp">
+        android:orientation="vertical"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="12dp"
+        android:elevation="2dp">
 
         <TextView
             android:id="@+id/tvUserMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#000000"
-            android:textSize="16sp"
-            android:text="Pesan dari user muncul di sini" />
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
+            android:lineSpacingExtra="4dp"
+            android:text="Pesan lo..." />
     </LinearLayout>
 
 </LinearLayout>

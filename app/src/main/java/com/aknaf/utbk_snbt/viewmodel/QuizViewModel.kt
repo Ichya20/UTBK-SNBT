@@ -1,6 +1,7 @@
 package com.aknaf.utbk_snbt.viewmodel
 
-import android.os.CountDownTimer // 🚀 WAJIB TAMBAH IMPORT INI
+import android.os.CountDownTimer
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.aknaf.utbk_snbt.model.QuestionModel
@@ -17,80 +18,87 @@ class QuizViewModel : ViewModel() {
     var selectedOption = mutableStateOf("")
     var isAnswered = mutableStateOf(false)
 
-    var timeLeft = mutableStateOf(600) // Waktu default 600 detik (10 Menit)
+    var timeLeft = mutableStateOf(600)
     private var timer: CountDownTimer? = null
 
-    // Fungsi untuk narik data & filter berdasarkan kategori
     fun startQuiz(subjectCode: String) {
-        // Reset state biar kerasa fresh kalau user ngulang kuis
         filteredQuestions.value = emptyList()
         score.value = 0
         currentIndex.value = 0
         isQuizFinished.value = false
+        selectedOption.value = ""
+        isAnswered.value = false
         timeLeft.value = 600
         timer?.cancel()
 
         db.collection("dynamic_questions")
-            .whereEqualTo("subject", subjectCode) // Filter di server Firestore
+            .whereEqualTo("subject", subjectCode)
             .get()
             .addOnSuccessListener { result ->
+                // ─── DEBUG: Lihat raw data dari Firestore ───
+                result.documents.forEach { doc ->
+                    Log.d("QUIZ_DEBUG", "=== Document ID: ${doc.id} ===")
+                    Log.d("QUIZ_DEBUG", "  subject  : ${doc.getString("subject")}")
+                    Log.d("QUIZ_DEBUG", "  question : ${doc.getString("question")}")
+                    Log.d("QUIZ_DEBUG", "  optionA  : ${doc.getString("optionA")}")
+                    Log.d("QUIZ_DEBUG", "  optionB  : ${doc.getString("optionB")}")
+                    Log.d("QUIZ_DEBUG", "  optionC  : ${doc.getString("optionC")}")
+                    Log.d("QUIZ_DEBUG", "  optionD  : ${doc.getString("optionD")}")
+                    Log.d("QUIZ_DEBUG", "  optionE  : ${doc.getString("optionE")}")
+                    Log.d("QUIZ_DEBUG", "  answer   : ${doc.getString("answer")}")
+                }
+
                 val list = result.toObjects(QuestionModel::class.java)
+
+                // ─── DEBUG: Lihat hasil mapping ke QuestionModel ───
+                list.forEach { q ->
+                    Log.d("QUIZ_DEBUG", "=== QuestionModel ===")
+                    Log.d("QUIZ_DEBUG", "  subject  : ${q.subject}")
+                    Log.d("QUIZ_DEBUG", "  question : ${q.question}")
+                    Log.d("QUIZ_DEBUG", "  answer   : [${q.answer}]") // kurung buat deteksi spasi tersembunyi
+                    Log.d("QUIZ_DEBUG", "  optionA  : [${q.optionA}]")
+                    Log.d("QUIZ_DEBUG", "  optionB  : [${q.optionB}]")
+                }
+
                 filteredQuestions.value = list.shuffled()
 
-                // 🚀 MULAI TIMER HANYA JIKA SOAL BERHASIL DI-DOWNLOAD
                 if (list.isNotEmpty()) {
                     startTimer()
                 }
             }
             .addOnFailureListener { e ->
-                android.util.Log.e("QUIZ_ERROR", "Gagal ambil soal: ${e.message}")
+                Log.e("QUIZ_ERROR", "Gagal ambil soal: ${e.message}")
             }
     }
 
-    // 🚀 INI BLOK FUNGSI TIMER-NYA
     private fun startTimer() {
-        timer?.cancel() // Batalkan timer lama kalau ada
+        timer?.cancel()
         timer = object : CountDownTimer(timeLeft.value * 1000L, 1000) {
             override fun onTick(millisUntilFinished: Long) {
                 timeLeft.value = (millisUntilFinished / 1000).toInt()
             }
             override fun onFinish() {
-                // Kuis otomatis selesai saat waktu habis
                 isQuizFinished.value = true
-                saveScoreToFirebase() // 🚀 TAMBAHKAN INI WOK!
+                saveScoreToFirebase()
             }
         }.start()
     }
 
-    // --- [FUNGSI SIMPAN SKOR KE FIREBASE] ---
-    private fun saveScoreToFirebase() {
-        // Karena kita belum bikin fitur Login, kita pakai ID sementara dulu
-        val dummyUserId = "ichya_ulumiddiin"
-
-        // Ambil kode materi dari soal yang lagi dikerjakan
-        val currentSubject = filteredQuestions.value.firstOrNull()?.subject ?: "UNKNOWN"
-
-        val scoreData = com.aknaf.utbk_snbt.model.ScoreModel(
-            userId = dummyUserId,
-            subject = currentSubject,
-            score = score.value,
-            timestamp = System.currentTimeMillis()
-        )
-
-        db.collection("user_scores").add(scoreData)
-            .addOnSuccessListener {
-                android.util.Log.d("FIREBASE_SCORE", "Wih, skor berhasil disimpan!")
-            }
-            .addOnFailureListener { e ->
-                android.util.Log.e("FIREBASE_SCORE", "Gagal simpan skor: ${e.message}")
-            }
-    }
-
     fun submitAnswer() {
         val currentSoal = filteredQuestions.value[currentIndex.value]
-        // Logika skor asli: bandingkan pilihan user dengan kunci jawaban
-        if (selectedOption.value == currentSoal.answer) {
+        val userAnswer = selectedOption.value.trim()
+        val correctAnswer = currentSoal.answer.trim() // .trim() buat buang spasi tersembunyi
+
+        // ─── DEBUG: Bandingkan secara eksplisit ───
+        Log.d("QUIZ_ANSWER", "User pilih   : [$userAnswer]")
+        Log.d("QUIZ_ANSWER", "Jawaban benar: [$correctAnswer]")
+        Log.d("QUIZ_ANSWER", "Cocok?       : ${userAnswer == correctAnswer}")
+
+        if (userAnswer == correctAnswer) {
             score.value += 10
+            Log.d("QUIZ_ANSWER", "✅ BENAR! Skor sekarang: ${score.value}")
+        } else {
+            Log.d("QUIZ_ANSWER", "❌ SALAH")
         }
         isAnswered.value = true
     }
@@ -102,13 +110,34 @@ class QuizViewModel : ViewModel() {
             isAnswered.value = false
         } else {
             isQuizFinished.value = true
-            saveScoreToFirebase() // 🚀 TAMBAHKAN INI JUGA DI SINI!
+            saveScoreToFirebase()
         }
     }
 
-    // 🚀 WAJIB DITAMBAHKAN BIAR HP GAK NGE-LAG KARENA MEMORY LEAK
+    private fun saveScoreToFirebase() {
+        val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+            ?: "anonymous_user"
+
+        val currentSubject = filteredQuestions.value.firstOrNull()?.subject ?: "UNKNOWN"
+
+        val scoreData = com.aknaf.utbk_snbt.model.ScoreModel(
+            userId = userId,
+            subject = currentSubject,
+            score = score.value,
+            timestamp = System.currentTimeMillis()
+        )
+
+        db.collection("user_scores").add(scoreData)
+            .addOnSuccessListener {
+                Log.d("FIREBASE_SCORE", "Skor berhasil disimpan: ${score.value} untuk $currentSubject")
+            }
+            .addOnFailureListener { e ->
+                Log.e("FIREBASE_SCORE", "Gagal simpan skor: ${e.message}")
+            }
+    }
+
     override fun onCleared() {
         super.onCleared()
-        timer?.cancel() // Matikan timer kalau user keluar dari halaman kuis
+        timer?.cancel()
     }
 }

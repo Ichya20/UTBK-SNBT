@@ -158,10 +158,8 @@ class ScreenMateri: Screen {
                                     textAlign = TextAlign.Center,
                                 )
                                 Button(
-                                    onClick = { navigator?.push(PKuantitatif()) },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 8.dp),
+                                    onClick = { navigator?.push(PPUmum()) }, // GANTI JADI INI
+                                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                                     shape = RoundedCornerShape(8.dp)
                                 ) {
                                     Text(text = "Masuk")
@@ -183,10 +181,8 @@ class ScreenMateri: Screen {
                                     textAlign = TextAlign.Center,
                                 )
                                 Button(
-                                    onClick = { navigator?.push(PKuantitatif()) },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 8.dp),
+                                    onClick = { navigator?.push(KMBM()) }, // GANTI JADI INI
+                                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                                     shape = RoundedCornerShape(8.dp)
                                 ) {
                                     Text(text = "Masuk")
@@ -208,10 +204,8 @@ class ScreenMateri: Screen {
                                     textAlign = TextAlign.Center,
                                 )
                                 Button(
-                                    onClick = { navigator?.push(PMatematika()) },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 8.dp),
+                                    onClick = { navigator?.push(Lindo()) }, // GANTI JADI INI
+                                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                                     shape = RoundedCornerShape(8.dp)
                                 ) {
                                     Text(text = "Masuk")
@@ -233,10 +227,8 @@ class ScreenMateri: Screen {
                                     textAlign = TextAlign.Center,
                                 )
                                 Button(
-                                    onClick = { navigator?.push(PKuantitatif()) },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 8.dp),
+                                    onClick = { navigator?.push(Linggris()) }, // GANTI JADI INI
+                                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                                     shape = RoundedCornerShape(8.dp)
                                 ) {
                                     Text(text = "Masuk")

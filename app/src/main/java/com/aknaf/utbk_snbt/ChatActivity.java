@@ -103,9 +103,10 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void panggilBotAI(String pesanUser) {
+        // 🔥 FIX 1: NAMA MODEL HARUS VALID (gemini-1.5-flash)
         GenerativeModel gm = new GenerativeModel(
-                "gemini-3-flash-preview",
-                "AIzaSyDFdN9wekG2zmbYHf_g-HSq1pgcsEqlGNk"
+                "gemini-1.5-flash",
+                "AIzaSyDFdN9wekG2zmbYHf_g-HSq1pgcsEqlGNk" // Pastikan API Key ini beneran aktif
         );
 
         GenerativeModelFutures model = GenerativeModelFutures.from(gm);
@@ -116,6 +117,7 @@ public class ChatActivity extends AppCompatActivity {
                         .addText("Kamu adalah asisten ahli UTBK-SNBT. Bantulah user menjawab materi UTBK secara ringkas: " + pesanUser)
                         .build();
 
+                // 🔥 FIX 2: Proses generate sudah aman pakai Guava
                 GenerateContentResponse response = model.generateContent(content).get();
                 String balasanBeneran = response.getText();
 

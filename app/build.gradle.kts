@@ -6,14 +6,16 @@ plugins {
 
 android {
     namespace = "com.aknaf.utbk_snbt"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.aknaf.utbk_snbt"
         minSdk = 27
-        targetSdk = 33
-        versionCode = 1
-        versionName = "1.0"
+        targetSdk = 35
+
+        // --- REVISI POIN 2 & 3: SETUP VERSI AWAL + TEKS BETA ---
+        versionCode = 4
+        versionName = "1.0.3-Beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -37,9 +39,13 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
+    // --- 🚀 DISINI SUDAH AKU AKTIFKAN BUILDCONFIG NYA SECARA OTOMATIS ---
     buildFeatures {
         compose = true
+        buildConfig = true
     }
+
     composeOptions {
         kotlinCompilerExtensionVersion = "1.4.3"
     }
@@ -54,13 +60,14 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:21.0.0")
     // Ganti dari 0.7.0 ke versi yang lebih baru (misal 0.9.0)
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
+    implementation("com.google.guava:guava:32.1.3-android")
     // Firebase BoM (Bill of Materials) - Menjaga agar semua versi library Firebase kompak
     implementation(platform("com.google.firebase:firebase-bom:32.7.2"))
 
     // Library Firebase yang kamu butuhkan
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-analytics")
-    implementation("com.google.firebase:firebase-firestore") // 🔥 SUDAH DITAMBAH KURUNG TUTUP DI SINI
+    implementation("com.google.firebase:firebase-firestore")
 
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")

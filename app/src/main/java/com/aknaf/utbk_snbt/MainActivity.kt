@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import cafe.adriel.voyager.navigator.Navigator
 import com.aknaf.utbk_snbt.ui.theme.UTBKSNBTTheme
-import com.aknaf.utbk_snbt.utils.DynamicDataSeeder
 import com.aknaf.utbk_snbt.utils.FirestoreSeeder
 
 class MainActivity : ComponentActivity() {
@@ -26,7 +25,6 @@ class MainActivity : ComponentActivity() {
         com.aknaf.utbk_snbt.utils.AlarmScheduler.scheduleAllTasks(this)
 
         FirestoreSeeder.seedIfNeeded()
-        DynamicDataSeeder.seedTextData()
         setContent {
             UTBKSNBTTheme {
                 // A surface container using the 'background' color from the theme

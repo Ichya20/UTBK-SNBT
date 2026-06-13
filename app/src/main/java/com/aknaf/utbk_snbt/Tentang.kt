@@ -1,6 +1,7 @@
 package com.aknaf.utbk_snbt
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,15 +9,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.BasicText
-import androidx.compose.foundation.text.ClickableText
-import androidx.compose.foundation.text.appendInlineContent
-import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -26,21 +27,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 
-class Tentang:Screen {
+class Tentang : Screen {
     @Composable
     override fun Content() {
+        val context = androidx.compose.ui.platform.LocalContext.current
+
         Box(modifier = Modifier.fillMaxSize()) {
             Image(
                 painter = painterResource(id = R.drawable.bgtentang2),
@@ -58,9 +57,14 @@ class Tentang:Screen {
                     .size(150.dp)
                     .clip(CircleShape)
             )
-            Column(modifier = Modifier.fillMaxSize().offset(y = 100.dp),
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .offset(y = 100.dp)
+                    .padding(horizontal = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center) {
+                verticalArrangement = Arrangement.Center
+            ) {
                 Text(
                     text = "Tentang Aplikasi",
                     fontSize = 20.sp,
@@ -68,12 +72,15 @@ class Tentang:Screen {
                     color = Color.Black
                 )
 
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Text(
                     text = "Aplikasi UTBK-SNBT ini dirancang untuk membantu siswa dalam mempersiapkan diri menghadapi ujian seleksi masuk perguruan tinggi.",
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 20.dp),
                     color = Color.Black
                 )
+
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Text(
                     text = "Fitur utama:",
@@ -86,13 +93,33 @@ class Tentang:Screen {
                     textAlign = TextAlign.Center,
                     color = Color.Black
                 )
-//                Text(
-//                    text = "Hubungi saya:",
-//                    textAlign = TextAlign.Center,
-//                    fontWeight = FontWeight.Bold
-//
-            }
 
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // --- 🚀 REVISI POIN 1: TOMBOL HELPDESK WEB GENERATE ---
+                Button(
+                    onClick = {
+                        // Silakan ganti URL di bawah ini dengan link web helpdesk backend kamu
+                        val webUrl = "https://nama-web-helpdesk-kamu.com"
+                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(webUrl))
+                        context.startActivity(intent)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF2B2B6E) // Warna biru premium kompak seperti menu Riwayat
+                    ),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Text(
+                        text = "🌐 Hubungi Helpdesk (Web)",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
         }
     }
 }

@@ -57,6 +57,9 @@ class Screen1 : Screen {
 
         val motivationVm: MotivationViewModel = viewModel()
 
+        // 🚀 REVISI POIN 4: Jalankan Fungsi Cek Update Otomatis saat aplikasi dibuka
+        CheckForUpdates(context = context)
+
         // 🚀 TRIGGER: Setiap kali layar Home muncul (Unit), paksa ViewModel nyari quote baru
         LaunchedEffect(Unit) {
             motivationVm.fetchRandomQuote()
@@ -92,7 +95,7 @@ class Screen1 : Screen {
                             Spacer(modifier = Modifier.width(16.dp))
                             Column {
                                 Text(
-                                    text = "Hello, Future Scholar! \uD83C\uDF93",
+                                    text = "Hello, Future Scholar! 🎓",
                                     color = Color.White,
                                     fontSize = 18.sp,
                                     fontWeight = FontWeight.ExtraBold
@@ -301,6 +304,28 @@ class Screen1 : Screen {
                         }
                     }
                 }
+
+                // --- 🚀 REVISI POIN 2: TAG TEKS VERSI ALPHA/BETA DI PALING BAWAH ---
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "VERSION 1.0.0 - BETA",
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier
+                                .background(
+                                    color = Color(0xFFD32F2F), // Badge Merah gelap
+                                    shape = RoundedCornerShape(6.dp)
+                                )
+                                .padding(horizontal = 10.dp, vertical = 5.dp)
+                        )
+                    }
+                }
             }
         }
     }
@@ -324,6 +349,36 @@ class Screen1 : Screen {
                 )
             )
             Text(title, modifier = Modifier.align(Alignment.BottomCenter).padding(10.dp), color = Color.White, fontWeight = FontWeight.Bold)
+        }
+    }
+
+    // --- 🚀 REVISI POIN 4: FUNGSI CEK UPDATE OTOMATIS VIA FIRESTORE ---
+    @Composable
+    fun CheckForUpdates(context: android.content.Context) {
+        val currentVersionCode = 1 // Sesuai dengan versionCode di build.gradle.kts kamu saat ini
+        val db = com.google.firebase.firestore.FirebaseFirestore.getInstance()
+
+        androidx.compose.runtime.LaunchedEffect(Unit) {
+            db.collection("app_version").document("version_info")
+                .get()
+                .addOnSuccessListener { document ->
+                    if (document != null && document.exists()) {
+                        val latestVersionCode = document.getLong("versionCode")?.toInt() ?: 1
+                        val downloadUrl = document.getString("downloadUrl") ?: ""
+
+                        if (latestVersionCode > currentVersionCode && downloadUrl.isNotEmpty()) {
+                            val builder = android.app.AlertDialog.Builder(context)
+                            builder.setTitle("Update Tersedia!")
+                            builder.setMessage("Versi aplikasi terbaru sudah rilis. Yuk update biar fiturnya makin lengkap tanpa colok USB!")
+                            builder.setPositiveButton("Update Sekarang") { _, _ ->
+                                val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(downloadUrl))
+                                context.startActivity(intent)
+                            }
+                            builder.setCancelable(false)
+                            builder.show()
+                        }
+                    }
+                }
         }
     }
 }
