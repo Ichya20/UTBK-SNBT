@@ -1,5 +1,15 @@
 package com.aknaf.utbk_snbt.screen
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.net.URL
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
@@ -37,6 +47,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -44,6 +55,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -66,8 +78,14 @@ import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.aknaf.utbk_snbt.viewmodel.QuizViewModel
-import kotlinx.coroutines.delay
+import com.aknaf.utbk_snbt.model.ScoreLevel
+import com.aknaf.utbk_snbt.model.ScorePolicy
+import com.aknaf.utbk_snbt.model.SubjectCatalog
 import java.util.Locale
+import android.app.Activity
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import com.aknaf.utbk_snbt.ads.InterstitialAdManager
 
 // --- [FUNGSI FORMAT WAKTU DI LUAR CLASS BIAR BISA DIPAKAI] ---
 fun formatTime(seconds: Int): String {
@@ -82,10 +100,14 @@ data class DynamicQuizScreen(val subjectCode: String) : Screen {
     override fun Content() {
         val vm: QuizViewModel = viewModel()
         val navigator = LocalNavigator.currentOrThrow
+        val context = LocalContext.current
+        val activity = context as? Activity
+        var canShowResult by remember(subjectCode) { mutableStateOf(false) }
 
         // Load soal cuma sekali
         LaunchedEffect(subjectCode) {
             vm.startQuiz(subjectCode)
+            InterstitialAdManager.load(context)
         }
 
         val questions = vm.filteredQuestions.value
@@ -94,11 +116,99 @@ data class DynamicQuizScreen(val subjectCode: String) : Screen {
         // PAKSA BACKGROUND PUTIH (Anti Dark Mode hancur)
         Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFFF8F9FA)) {
             when {
-                vm.isQuizFinished.value -> {
-                    ResultUI(vm.score.value) { navigator.popUntilRoot() }
+                vm.isLoading.value -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = Color(0xFF2B2B6E))
+                    }
                 }
+
+                vm.errorMessage.value != null -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = vm.errorMessage.value ?: "Terjadi kesalahan saat memuat soal.",
+                            color = Color.Black,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        Button(
+                            onClick = { navigator.pop() },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFF2B2B6E)
+                            ),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Text(
+                                text = "Kembali",
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                vm.isQuizFinished.value && !canShowResult -> {
+                    LaunchedEffect(Unit) {
+                        if (activity != null) {
+                            InterstitialAdManager.show(activity) {
+                                canShowResult = true
+                            }
+                        } else {
+                            canShowResult = true
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            CircularProgressIndicator(color = Color(0xFF2B2B6E))
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Menyiapkan hasil simulasi...",
+                                color = Color.Black,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                vm.isQuizFinished.value && canShowResult -> {
+                    ResultUI(
+                        subjectCode = vm.currentSubjectCode.value,
+                        score = vm.score.value,
+                        correctAnswers = vm.correctAnswers.value,
+                        wrongAnswers = vm.wrongAnswers.value,
+                        totalQuestions = vm.totalQuestions.value,
+                        maxScore = vm.maxScore.value,
+                        percentage = vm.percentage.value,
+                        onRestart = {
+                            canShowResult = false
+                            vm.resetAndRestartQuiz()
+                            InterstitialAdManager.load(context)
+                        },
+                        onHome = { navigator.popUntilRoot() }
+                    )
+                }
+
                 questions.isNotEmpty() -> {
                     val soal = questions[currentIdx]
+
 
                     Column(modifier = Modifier.padding(20.dp).fillMaxSize()) {
 
@@ -109,16 +219,24 @@ data class DynamicQuizScreen(val subjectCode: String) : Screen {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             // Warnanya berubah jadi merah kalau waktu sisa < 1 Menit (60 detik)
-                            val timerColor = if (vm.timeLeft.value < 60) Color(0xFFD32F2F) else Color(0xFF2B2B6E)
+                            val timerColor =
+                                if (vm.timeLeft.value < 60) Color(0xFFD32F2F) else Color(0xFF2B2B6E)
 
                             Card(
-                                colors = CardDefaults.cardColors(containerColor = timerColor.copy(alpha = 0.1f)),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = timerColor.copy(
+                                        alpha = 0.1f
+                                    )
+                                ),
                                 shape = RoundedCornerShape(8.dp),
                                 border = BorderStroke(1.dp, timerColor.copy(alpha = 0.2f))
                             ) {
                                 Text(
                                     text = "⏱ ${formatTime(vm.timeLeft.value)}",
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    modifier = Modifier.padding(
+                                        horizontal = 12.dp,
+                                        vertical = 6.dp
+                                    ),
                                     color = timerColor,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 16.sp
@@ -138,7 +256,10 @@ data class DynamicQuizScreen(val subjectCode: String) : Screen {
                         // Header: Progress Bar Halus
                         val animatedProgress by animateFloatAsState(
                             targetValue = (currentIdx + 1).toFloat() / questions.size,
-                            animationSpec = tween(durationMillis = 500, easing = LinearOutSlowInEasing)
+                            animationSpec = tween(
+                                durationMillis = 500,
+                                easing = LinearOutSlowInEasing
+                            )
                         )
                         LinearProgressIndicator(
                             progress = animatedProgress,
@@ -160,25 +281,66 @@ data class DynamicQuizScreen(val subjectCode: String) : Screen {
                             modifier = Modifier.weight(1f)
                         ) { currentSoal ->
                             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                                // Teks Soal
-                                Text(
-                                    text = currentSoal.question,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    color = Color.Black,
-                                    lineHeight = 30.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
+                                // Teks dan gambar soal
+                                if (currentSoal.question.isNotBlank()) {
+                                    Text(
+                                        text = currentSoal.question,
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = Color.Black,
+                                        lineHeight = 30.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+
+                                if (
+                                    currentSoal.questionImageUrl.isNotBlank()
+                                    || currentSoal.questionImageName.isNotBlank()
+                                ) {
+                                    if (currentSoal.question.isNotBlank()) {
+                                        Spacer(modifier = Modifier.height(14.dp))
+                                    }
+
+                                    QuizImage(
+                                        imageUrl = currentSoal.questionImageUrl,
+                                        imageName = currentSoal.questionImageName,
+                                        contentDescription = "Gambar soal",
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .heightIn(
+                                                min = 140.dp,
+                                                max = 320.dp
+                                            )
+                                            .clip(RoundedCornerShape(16.dp))
+                                    )
+                                }
 
                                 Spacer(modifier = Modifier.height(32.dp))
 
-                                // List Opsi Jawaban
+                                // List Opsi Jawaban.
+                                // Pilihan bisa berupa teks, gambar, atau teks + gambar.
                                 val options = listOf(
-                                    "optionA" to currentSoal.optionA, "optionB" to currentSoal.optionB,
-                                    "optionC" to currentSoal.optionC, "optionD" to currentSoal.optionD, "optionE" to currentSoal.optionE
+                                    QuizOptionData("optionA", currentSoal.optionA, currentSoal.optionAImageUrl, currentSoal.optionAImageName),
+                                    QuizOptionData("optionB", currentSoal.optionB, currentSoal.optionBImageUrl, currentSoal.optionBImageName),
+                                    QuizOptionData("optionC", currentSoal.optionC, currentSoal.optionCImageUrl, currentSoal.optionCImageName),
+                                    QuizOptionData("optionD", currentSoal.optionD, currentSoal.optionDImageUrl, currentSoal.optionDImageName),
+                                    QuizOptionData("optionE", currentSoal.optionE, currentSoal.optionEImageUrl, currentSoal.optionEImageName)
                                 )
 
-                                options.forEach { (key, text) ->
-                                    QuizOptionAnimCard(key, text, vm, currentSoal.answer)
+                                options.forEach { option ->
+                                    if (
+                                        option.text.isNotBlank()
+                                        || option.imageUrl.isNotBlank()
+                                        || option.imageName.isNotBlank()
+                                    ) {
+                                        QuizOptionAnimCard(
+                                            key = option.key,
+                                            text = option.text,
+                                            imageUrl = option.imageUrl,
+                                            imageName = option.imageName,
+                                            vm = vm,
+                                            correctAnswer = currentSoal.answer
+                                        )
+                                    }
                                 }
 
                                 Spacer(modifier = Modifier.height(20.dp))
@@ -191,10 +353,12 @@ data class DynamicQuizScreen(val subjectCode: String) : Screen {
                             enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
                             exit = fadeOut()
                         ) {
-                            val isUserCorrect = vm.selectedOption.value == soal.answer
+                            val isUserCorrect = vm.selectedOption.value.trim() == soal.answer.trim()
                             FeedbackMessage(
                                 isCorrect = isUserCorrect,
-                                explanation = soal.explanation
+                                explanation = soal.explanation,
+                                explanationImageUrl = soal.explanationImageUrl,
+                                explanationImageName = soal.explanationImageName
                             )
                         }
 
@@ -231,10 +395,18 @@ data class DynamicQuizScreen(val subjectCode: String) : Screen {
                         }
                     }
                 }
+
                 else -> {
-                    // Loading State
-                    Box(Modifier.fillMaxSize(), Alignment.Center) {
-                        CircularProgressIndicator(color = Color(0xFF2B2B6E))
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Soal belum tersedia.",
+                            color = Color.Black,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
@@ -246,8 +418,162 @@ data class DynamicQuizScreen(val subjectCode: String) : Screen {
 // COMPOSABLE COMPONENT KHUSUS ANIMASI
 // ============================================
 
+private data class QuizOptionData(
+    val key: String,
+    val text: String,
+    val imageUrl: String,
+    val imageName: String
+)
+
 @Composable
-fun QuizOptionAnimCard(key: String, text: String, vm: QuizViewModel, correctAnswer: String) {
+fun QuizImage(
+    imageUrl: String,
+    imageName: String,
+    contentDescription: String?,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val cleanImageName = imageName.trim().substringBeforeLast(".")
+    val localImageResId = if (cleanImageName.isNotBlank()) {
+        context.resources.getIdentifier(cleanImageName, "drawable", context.packageName)
+    } else {
+        0
+    }
+
+    when {
+        localImageResId != 0 -> {
+            Image(
+                painter = painterResource(id = localImageResId),
+                contentDescription = contentDescription,
+                modifier = modifier.background(Color.White),
+                contentScale = ContentScale.Fit
+            )
+        }
+
+        imageUrl.isNotBlank() -> {
+            RemoteImage(
+                url = imageUrl,
+                contentDescription = contentDescription,
+                modifier = modifier
+            )
+        }
+
+        else -> {
+            Box(
+                modifier = modifier.background(
+                    color = Color(0xFFFFF3F3),
+                    shape = RoundedCornerShape(16.dp)
+                ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Gambar belum tersedia",
+                    color = Color(0xFFD32F2F),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+private sealed class RemoteImageState {
+    object Loading : RemoteImageState()
+    data class Success(val bitmap: Bitmap) : RemoteImageState()
+    object Error : RemoteImageState()
+}
+
+@Composable
+fun RemoteImage(
+    url: String,
+    contentDescription: String?,
+    modifier: Modifier = Modifier
+) {
+    val cleanUrl = url.trim()
+
+    if (cleanUrl.isBlank()) {
+        return
+    }
+
+    val imageState by produceState<RemoteImageState>(
+        initialValue = RemoteImageState.Loading,
+        key1 = cleanUrl
+    ) {
+        value = withContext(Dispatchers.IO) {
+            try {
+                val connection = URL(cleanUrl).openConnection()
+                connection.connectTimeout = 10000
+                connection.readTimeout = 10000
+
+                connection.getInputStream().use { input ->
+                    val bitmap = BitmapFactory.decodeStream(input)
+
+                    if (bitmap != null) {
+                        RemoteImageState.Success(bitmap)
+                    } else {
+                        RemoteImageState.Error
+                    }
+                }
+            } catch (error: Exception) {
+                RemoteImageState.Error
+            }
+        }
+    }
+
+    when (val state = imageState) {
+        is RemoteImageState.Loading -> {
+            Box(
+                modifier = modifier.background(
+                    color = Color(0xFFF1F1F1),
+                    shape = RoundedCornerShape(16.dp)
+                ),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(28.dp),
+                    color = Color(0xFF2B2B6E),
+                    strokeWidth = 3.dp
+                )
+            }
+        }
+
+        is RemoteImageState.Success -> {
+            Image(
+                bitmap = state.bitmap.asImageBitmap(),
+                contentDescription = contentDescription,
+                modifier = modifier.background(Color.White),
+                contentScale = ContentScale.Fit
+            )
+        }
+
+        is RemoteImageState.Error -> {
+            Box(
+                modifier = modifier.background(
+                    color = Color(0xFFFFF3F3),
+                    shape = RoundedCornerShape(16.dp)
+                ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Gambar tidak dapat dimuat",
+                    color = Color(0xFFD32F2F),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun QuizOptionAnimCard(
+    key: String,
+    text: String,
+    imageUrl: String,
+    imageName: String,
+    vm: QuizViewModel,
+    correctAnswer: String
+) {
     val isSelected = vm.selectedOption.value == key
 
     val backgroundColor by animateColorAsState(
@@ -298,7 +624,37 @@ fun QuizOptionAnimCard(key: String, text: String, vm: QuizViewModel, correctAnsw
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            Text(text, modifier = Modifier.weight(1f), color = Color.Black, fontSize = 16.sp)
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                if (text.isNotBlank()) {
+                    Text(
+                        text = text,
+                        color = Color.Black,
+                        fontSize = 16.sp,
+                        lineHeight = 22.sp
+                    )
+                }
+
+                if (imageUrl.isNotBlank() || imageName.isNotBlank()) {
+                    if (text.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+
+                    QuizImage(
+                        imageUrl = imageUrl,
+                        imageName = imageName,
+                        contentDescription = "Gambar pilihan $letter",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(
+                                min = 90.dp,
+                                max = 190.dp
+                            )
+                            .clip(RoundedCornerShape(14.dp))
+                    )
+                }
+            }
 
             if (vm.isAnswered.value) {
                 AnimatedVisibility(visible = true, enter = scaleIn() + fadeIn()) {
@@ -315,7 +671,12 @@ fun QuizOptionAnimCard(key: String, text: String, vm: QuizViewModel, correctAnsw
 }
 
 @Composable
-fun FeedbackMessage(isCorrect: Boolean, explanation: String) {
+fun FeedbackMessage(
+    isCorrect: Boolean,
+    explanation: String,
+    explanationImageUrl: String,
+    explanationImageName: String
+) {
     Card(
         modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
         colors = CardDefaults.cardColors(
@@ -347,43 +708,318 @@ fun FeedbackMessage(isCorrect: Boolean, explanation: String) {
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = "Pembahasan: $explanation",
-                color = Color.Black,
-                lineHeight = 22.sp,
-                fontSize = 14.sp
-            )
+            if (explanation.isNotBlank()) {
+                Text(
+                    text = "Pembahasan: $explanation",
+                    color = Color.Black,
+                    lineHeight = 22.sp,
+                    fontSize = 14.sp
+                )
+            } else {
+                Text(
+                    text = "Pembahasan belum tersedia.",
+                    color = Color.Black,
+                    lineHeight = 22.sp,
+                    fontSize = 14.sp
+                )
+            }
+
+            if (explanationImageUrl.isNotBlank() || explanationImageName.isNotBlank()) {
+                Spacer(modifier = Modifier.height(12.dp))
+
+                QuizImage(
+                    imageUrl = explanationImageUrl,
+                    imageName = explanationImageName,
+                    contentDescription = "Gambar pembahasan",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(
+                            min = 120.dp,
+                            max = 260.dp
+                        )
+                        .clip(RoundedCornerShape(14.dp))
+                )
+            }
         }
     }
 }
 
 @Composable
-fun ResultUI(score: Int, onHome: () -> Unit) {
+fun ResultUI(
+    subjectCode: String,
+    score: Int,
+    correctAnswers: Int,
+    wrongAnswers: Int,
+    totalQuestions: Int,
+    maxScore: Int,
+    percentage: Double,
+    onRestart: () -> Unit,
+    onHome: () -> Unit
+) {
+    val evaluation = ScorePolicy.evaluate(percentage)
+
+    val statusColor = when (evaluation.level) {
+        ScoreLevel.BELOW_TARGET -> Color(0xFFD32F2F)
+        ScoreLevel.NEAR_TARGET -> Color(0xFFF9A825)
+        ScoreLevel.TARGET_REACHED -> Color(0xFF2E7D32)
+    }
+
+    var startAnimation by remember {
+        mutableStateOf(false)
+    }
+
+    var showResetDialog by remember {
+        mutableStateOf(false)
+    }
+
+    LaunchedEffect(score) {
+        startAnimation = true
+    }
+
+    val animatedScore by animateFloatAsState(
+        targetValue = if (startAnimation) {
+            score.toFloat()
+        } else {
+            0f
+        },
+        animationSpec = tween(
+            durationMillis = 1000,
+            easing = LinearOutSlowInEasing
+        )
+    )
+
+    if (showResetDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showResetDialog = false
+            },
+            title = {
+                Text(
+                    text = "Ulangi Simulasi?",
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Black
+                )
+            },
+            text = {
+                Text(
+                    text = "Jawaban dan skor percobaan ini akan direset dari layar pengerjaan. Riwayat skor yang sudah tersimpan tetap aman.",
+                    color = Color(0xFF333333),
+                    lineHeight = 20.sp
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showResetDialog = false
+                        onRestart()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF2B2B6E),
+                        contentColor = Color.White
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "Ya, Ulangi",
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = {
+                        showResetDialog = false
+                    },
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(text = "Batal")
+                }
+            },
+            containerColor = Color.White
+        )
+    }
+
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Kuis Selesai!", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color.Black)
+        Spacer(modifier = Modifier.height(26.dp))
+
+        Text(
+            text = "Simulasi Selesai!",
+            fontSize = 26.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
+
+        Text(
+            text = SubjectCatalog.displayName(subjectCode),
+            color = Color.Gray,
+            fontSize = 15.sp
+        )
+
         Spacer(modifier = Modifier.height(24.dp))
 
-        var animatedScore by remember { mutableStateOf(0) }
-        LaunchedEffect(score) {
-            delay(300)
-            for (i in 0..score) {
-                animatedScore = i
-                delay(if (score > 0) (1000 / score).toLong() else 10)
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = Color.White
+            ),
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 5.dp
+            ),
+            shape = RoundedCornerShape(22.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(22.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = animatedScore.toInt().toString(),
+                    fontSize = 76.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = statusColor
+                )
+
+                Text(
+                    text = "dari $maxScore poin",
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                LinearProgressIndicator(
+                    progress = (
+                        percentage / 100.0
+                    ).toFloat(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(10.dp)
+                        .clip(CircleShape),
+                    color = statusColor,
+                    trackColor = Color(0xFFE5E5E5)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = String.format(
+                        Locale.getDefault(),
+                        "%.0f%%",
+                        percentage
+                    ),
+                    color = statusColor,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
 
-        Text(text = "$animatedScore", fontSize = 100.sp, fontWeight = FontWeight.ExtraBold, color = Color(0xFF2B2B6E))
-        Text("Skor Kamu", color = Color.Gray, fontSize = 18.sp)
+        Spacer(modifier = Modifier.height(16.dp))
 
-        Spacer(modifier = Modifier.height(60.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            ResultMetricCard(
+                label = "Benar",
+                value = correctAnswers.toString(),
+                color = Color(0xFF2E7D32),
+                modifier = Modifier.weight(1f)
+            )
+
+            ResultMetricCard(
+                label = "Salah",
+                value = wrongAnswers.toString(),
+                color = Color(0xFFD32F2F),
+                modifier = Modifier.weight(1f)
+            )
+
+            ResultMetricCard(
+                label = "Total Soal",
+                value = totalQuestions.toString(),
+                color = Color(0xFF2B2B6E),
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = statusColor.copy(alpha = 0.10f)
+            ),
+            border = BorderStroke(
+                width = 1.dp,
+                color = statusColor.copy(alpha = 0.35f)
+            ),
+            shape = RoundedCornerShape(18.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(18.dp)
+            ) {
+                Text(
+                    text = evaluation.title,
+                    color = statusColor,
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 18.sp
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = evaluation.description,
+                    color = Color(0xFF333333),
+                    lineHeight = 20.sp,
+                    fontSize = 13.sp
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = "Status ini merupakan indikator target latihan, " +
+                "bukan prediksi resmi kelulusan UTBK-SNBT.",
+            color = Color.Gray,
+            fontSize = 10.sp,
+            lineHeight = 15.sp
+        )
+
+        Spacer(modifier = Modifier.height(26.dp))
+
+        Button(
+            onClick = {
+                showResetDialog = true
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFFD32F2F),
+                contentColor = Color.White
+            ),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Text(
+                text = "Ulangi Simulasi",
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         Button(
             onClick = onHome,
-            modifier = Modifier.fillMaxWidth().height(56.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFF2B2B6E),
                 contentColor = Color.White
@@ -394,6 +1030,47 @@ fun ResultUI(score: Int, onHome: () -> Unit) {
                 text = "Kembali ke Beranda",
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp
+            )
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+    }
+}
+
+@Composable
+private fun ResultMetricCard(
+    label: String,
+    value: String,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier,
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 2.dp
+        ),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = value,
+                color = color,
+                fontWeight = FontWeight.ExtraBold,
+                fontSize = 22.sp
+            )
+
+            Text(
+                text = label,
+                color = Color.Gray,
+                fontSize = 11.sp
             )
         }
     }

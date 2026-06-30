@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="24dp"
+    android:background="#0F172A">
+
+    <TextView
+        android:text="ADMIN UTBK-SNBT"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:textSize="26sp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp" />
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:cardCornerRadius="22dp"
+        app:cardElevation="10dp"
+        app:cardBackgroundColor="#FFFFFF">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:padding="24dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:text="Masuk sebagai Administrator"
+                android:textColor="#1E293B"
+                android:textStyle="bold"
+                android:textSize="21sp"
+                android:gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="22dp" />
+
+            <TextView
+                android:text="Email Admin"
+                android:textColor="#334155"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/edtAdminEmail"
+                android:hint="Masukkan email admin"
+                android:inputType="textEmailAddress"
+                android:autofillHints="emailAddress"
+                android:minHeight="52dp"
+                android:paddingHorizontal="16dp"
+                android:background="@android:drawable/edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:text="Password Admin"
+                android:textColor="#334155"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp" />
+
+            <EditText
+                android:id="@+id/edtAdminPassword"
+                android:hint="Masukkan password admin"
+                android:inputType="textPassword"
+                android:autofillHints="password"
+                android:minHeight="52dp"
+                android:paddingHorizontal="16dp"
+                android:background="@android:drawable/edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="18dp" />
+
+            <Button
+                android:id="@+id/btnAdminLogin"
+                android:text="Masuk Admin"
+                android:textColor="#FFFFFF"
+                android:backgroundTint="#1D4ED8"
+                android:minHeight="52dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cornerRadius="14dp" />
+
+            <Button
+                android:id="@+id/btnBackToUserLogin"
+                android:text="Kembali"
+                android:textColor="#1D4ED8"
+                android:backgroundTint="#E0ECFF"
+                android:minHeight="48dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                app:cornerRadius="14dp" />
+
+            <TextView
+                android:id="@+id/tvAdminStatus"
+                android:text=""
+                android:textColor="#D32F2F"
+                android:textSize="13sp"
+                android:gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp" />
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+</LinearLayout>

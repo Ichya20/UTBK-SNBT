@@ -1,8 +1,23 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.gms.google-services")
 }
+
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { load(it) }
+    }
+}
+
+val geminiApiKey = localProperties.getProperty(
+    "GEMINI_API_KEY",
+    ""
+)
 
 android {
     namespace = "com.aknaf.utbk_snbt"
@@ -14,13 +29,19 @@ android {
         targetSdk = 35
 
         // --- REVISI POIN 2 & 3: SETUP VERSI AWAL + TEKS BETA ---
-        versionCode = 4
-        versionName = "1.0.3-Beta"
+        versionCode = 6
+        versionName = "1.0.5-Beta"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        buildConfigField(
+            "String",
+            "GEMINI_API_KEY",
+            "\"${geminiApiKey.replace("\"", "\\\"")}\""
+        )
     }
 
     buildTypes {
@@ -62,7 +83,7 @@ dependencies {
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
     implementation("com.google.guava:guava:32.1.3-android")
     // Firebase BoM (Bill of Materials) - Menjaga agar semua versi library Firebase kompak
-    implementation(platform("com.google.firebase:firebase-bom:32.7.2"))
+    implementation(platform("com.google.firebase:firebase-bom:33.1.2"))
 
     // Library Firebase yang kamu butuhkan
     implementation("com.google.firebase:firebase-auth")
@@ -105,4 +126,6 @@ dependencies {
     implementation("cafe.adriel.voyager:voyager-navigator:$voyagerVersion")
     implementation("cafe.adriel.voyager:voyager-tab-navigator:$voyagerVersion")
     implementation("cafe.adriel.voyager:voyager-transitions:$voyagerVersion")
+
+    implementation("com.google.android.gms:play-services-ads:23.3.0")
 }

@@ -12,17 +12,25 @@ import androidx.compose.ui.tooling.preview.Preview
 import cafe.adriel.voyager.navigator.Navigator
 import com.aknaf.utbk_snbt.ui.theme.UTBKSNBTTheme
 import com.aknaf.utbk_snbt.utils.FirestoreSeeder
+import com.aknaf.utbk_snbt.ads.InterstitialAdManager
+import com.aknaf.utbk_snbt.ads.RewardedAdManager
+import com.google.android.gms.ads.MobileAds
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        MobileAds.initialize(this) {
+            InterstitialAdManager.load(this)
+            RewardedAdManager.load(this)
+        }
+
         // 1. Minta izin notifikasi buat Android 13 (Tiramisu) ke atas
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
             requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 101)
         }
-        // 2. Aktifkan SEMUA jadwal belajar otomatis (Senin - Minggu)
-        com.aknaf.utbk_snbt.utils.AlarmScheduler.scheduleAllTasks(this)
+        // 2. Aktifkan kembali jadwal yang dibuat oleh user
+        com.aknaf.utbk_snbt.utils.AlarmScheduler.scheduleSavedTasks(this)
 
         FirestoreSeeder.seedIfNeeded()
         setContent {

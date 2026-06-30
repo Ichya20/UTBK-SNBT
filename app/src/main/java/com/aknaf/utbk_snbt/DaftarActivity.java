@@ -13,6 +13,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
+// 🔥 IMPORT FIRESTORE UNTUK SIMPAN DATA USER KE ADMIN
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
+import java.util.Map;
+
 public class DaftarActivity extends AppCompatActivity {
 
     EditText nama, telepon, tanggal, email, password, konfirmasi;
@@ -21,6 +28,9 @@ public class DaftarActivity extends AppCompatActivity {
     // 🔥 DEKLARASI FIREBASE AUTH
     private FirebaseAuth mAuth;
 
+    // 🔥 FIRESTORE UNTUK DATA USER ADMIN
+    private FirebaseFirestore db;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -28,6 +38,9 @@ public class DaftarActivity extends AppCompatActivity {
 
         // 🔥 INISIALISASI FIREBASE AUTH
         mAuth = FirebaseAuth.getInstance();
+
+        // 🔥 INISIALISASI FIRESTORE
+        db = FirebaseFirestore.getInstance();
 
         nama = findViewById(R.id.nama);
         telepon = findViewById(R.id.telepon);
@@ -75,15 +88,23 @@ public class DaftarActivity extends AppCompatActivity {
                                     // Kalau sukses bikin akun
                                     FirebaseUser user = mAuth.getCurrentUser();
 
-                                    // TODO: Simpan data Nama, Telepon, Tanggal ke Firebase Database
+                                    if (user != null) {
+                                        simpanDataUserKeFirestore(
+                                                user.getUid(),
+                                                sNama,
+                                                sTelepon,
+                                                sTanggal,
+                                                sEmail
+                                        );
+                                    } else {
+                                        Toast.makeText(DaftarActivity.this,
+                                                "Pendaftaran berhasil, tapi data user belum terbaca.",
+                                                Toast.LENGTH_LONG).show();
 
-                                    Toast.makeText(DaftarActivity.this,
-                                            "Pendaftaran berhasil!", Toast.LENGTH_SHORT).show();
-
-                                    // Pindah ke Login
-                                    Intent intent = new Intent(DaftarActivity.this, ActivityLogin.class);
-                                    startActivity(intent);
-                                    finish();
+                                        Intent intent = new Intent(DaftarActivity.this, ActivityLogin.class);
+                                        startActivity(intent);
+                                        finish();
+                                    }
                                 } else {
                                     // Kalau gagal (misal email sudah terdaftar atau format salah)
                                     Toast.makeText(DaftarActivity.this,
@@ -94,4 +115,41 @@ public class DaftarActivity extends AppCompatActivity {
             }
         });
     }
+    private void simpanDataUserKeFirestore(String uid, String namaUser, String teleponUser,
+                                           String tanggalUser, String emailUser) {
+
+        Map<String, Object> dataUser = new HashMap<>();
+        dataUser.put("uid", uid);
+        dataUser.put("nama", namaUser);
+        dataUser.put("telepon", teleponUser);
+        dataUser.put("tanggal", tanggalUser);
+        dataUser.put("email", emailUser);
+        dataUser.put("role", "user");
+        dataUser.put("provider", "email_password");
+        dataUser.put("createdAt", FieldValue.serverTimestamp());
+        dataUser.put("lastLoginAt", FieldValue.serverTimestamp());
+
+        db.collection("users")
+                .document(uid)
+                .set(dataUser)
+                .addOnSuccessListener(unused -> {
+                    Toast.makeText(DaftarActivity.this,
+                            "Pendaftaran berhasil!", Toast.LENGTH_SHORT).show();
+
+                    Intent intent = new Intent(DaftarActivity.this, ActivityLogin.class);
+                    startActivity(intent);
+                    finish();
+                })
+                .addOnFailureListener(error -> {
+                    Toast.makeText(DaftarActivity.this,
+                            "Akun berhasil dibuat, tapi data user gagal disimpan: "
+                                    + error.getMessage(),
+                            Toast.LENGTH_LONG).show();
+
+                    Intent intent = new Intent(DaftarActivity.this, ActivityLogin.class);
+                    startActivity(intent);
+                    finish();
+                });
+    }
+
 }

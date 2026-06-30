@@ -1,12 +1,9 @@
 package com.aknaf.utbk_snbt
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,11 +31,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import com.aknaf.utbk_snbt.screen.HelpDeskScreen
 
 class Tentang : Screen {
     @Composable
     override fun Content() {
-        val context = androidx.compose.ui.platform.LocalContext.current
+        val navigator = LocalNavigator.current
 
         Box(modifier = Modifier.fillMaxSize()) {
             Image(
@@ -46,10 +45,15 @@ class Tentang : Screen {
                 contentDescription = null,
                 contentScale = ContentScale.FillBounds,
                 modifier = Modifier.matchParentSize(),
-                colorFilter = ColorFilter.colorMatrix(colorMatrix = ColorMatrix().apply { Color.Black.alpha })
+                colorFilter = ColorFilter.colorMatrix(
+                    colorMatrix = ColorMatrix().apply { Color.Black.alpha }
+                )
             )
+
             Image(
-                painter = painterResource(id = R.drawable._ea2ddf67_d6e2_4091_b342_8e3ca07650ae),
+                painter = painterResource(
+                    id = R.drawable._ea2ddf67_d6e2_4091_b342_8e3ca07650ae
+                ),
                 contentDescription = stringResource(id = R.string.app_name),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -57,6 +61,7 @@ class Tentang : Screen {
                     .size(150.dp)
                     .clip(CircleShape)
             )
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -75,7 +80,8 @@ class Tentang : Screen {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Aplikasi UTBK-SNBT ini dirancang untuk membantu siswa dalam mempersiapkan diri menghadapi ujian seleksi masuk perguruan tinggi.",
+                    text = "Aplikasi UTBK-SNBT ini dirancang untuk membantu siswa " +
+                        "mempersiapkan diri menghadapi ujian seleksi masuk perguruan tinggi.",
                     textAlign = TextAlign.Center,
                     color = Color.Black
                 )
@@ -89,36 +95,46 @@ class Tentang : Screen {
                 )
 
                 Text(
-                    text = "- Pembahasan soal\n- Simulasi ujian\n- Tips & strategi belajar\n- Jadwal\n- Motivasi",
+                    text = "- Pembahasan soal\n" +
+                        "- Simulasi ujian\n" +
+                        "- Tips & strategi belajar\n" +
+                        "- Jadwal\n" +
+                        "- Motivasi",
                     textAlign = TextAlign.Center,
                     color = Color.Black
                 )
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // --- 🚀 REVISI POIN 1: TOMBOL HELPDESK WEB GENERATE ---
                 Button(
                     onClick = {
-                        // Silakan ganti URL di bawah ini dengan link web helpdesk backend kamu
-                        val webUrl = "https://nama-web-helpdesk-kamu.com"
-                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(webUrl))
-                        context.startActivity(intent)
+                        navigator?.push(HelpDeskScreen())
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF2B2B6E) // Warna biru premium kompak seperti menu Riwayat
+                        containerColor = Color(0xFF2B2B6E)
                     ),
                     shape = RoundedCornerShape(14.dp)
                 ) {
                     Text(
-                        text = "🌐 Hubungi Helpdesk (Web)",
+                        text = "Pusat Bantuan / Help Desk",
                         fontSize = 15.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                 }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Buka halaman ini untuk melihat panduan penggunaan " +
+                        "atau melaporkan kendala aplikasi.",
+                    textAlign = TextAlign.Center,
+                    fontSize = 12.sp,
+                    color = Color.Black.copy(alpha = 0.7f)
+                )
             }
         }
     }

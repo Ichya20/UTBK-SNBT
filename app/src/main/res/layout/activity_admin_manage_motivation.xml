@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F1F5F9">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="18dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:text="Kelola Motivasi"
+            android:textColor="#0F172A"
+            android:textStyle="bold"
+            android:textSize="27sp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/tvMotivationStatus"
+            android:text="Memuat..."
+            android:textColor="#1D4ED8"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="14dp" />
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="5dp"
+            app:cardBackgroundColor="#FFFFFF">
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:padding="18dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:text="Form Motivasi"
+                    android:textColor="#0F172A"
+                    android:textStyle="bold"
+                    android:textSize="19sp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="12dp" />
+
+                <EditText
+                    android:id="@+id/edtMotivationId"
+                    android:hint="Motivation ID, contoh: motivasi_001"
+                    android:inputType="text"
+                    android:singleLine="true"
+                    android:minHeight="50dp"
+                    android:paddingHorizontal="14dp"
+                    android:background="@android:drawable/edit_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <Button
+                    android:id="@+id/btnLoadMotivation"
+                    android:text="Load berdasarkan ID"
+                    android:textColor="#1D4ED8"
+                    android:backgroundTint="#E0ECFF"
+                    android:minHeight="46dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:cornerRadius="12dp" />
+
+                <EditText
+                    android:id="@+id/edtMotivationTitle"
+                    android:hint="Judul motivasi"
+                    android:inputType="text"
+                    android:minHeight="50dp"
+                    android:paddingHorizontal="14dp"
+                    android:background="@android:drawable/edit_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp" />
+
+                <EditText
+                    android:id="@+id/edtMotivationMessage"
+                    android:hint="Isi motivasi"
+                    android:inputType="textMultiLine"
+                    android:minLines="4"
+                    android:gravity="top"
+                    android:padding="14dp"
+                    android:background="@android:drawable/edit_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp" />
+
+                <EditText
+                    android:id="@+id/edtMotivationAuthor"
+                    android:hint="Penulis, contoh: Admin UTBK-SNBT"
+                    android:inputType="text"
+                    android:minHeight="50dp"
+                    android:paddingHorizontal="14dp"
+                    android:background="@android:drawable/edit_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp" />
+
+                <TextView
+                    android:text="Kategori"
+                    android:textColor="#334155"
+                    android:textStyle="bold"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp" />
+
+                <Spinner
+                    android:id="@+id/spMotivationCategory"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp" />
+
+                <Switch
+                    android:id="@+id/swMotivationActive"
+                    android:text="Aktif"
+                    android:checked="true"
+                    android:textColor="#0F172A"
+                    android:textStyle="bold"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp" />
+
+                <Button
+                    android:id="@+id/btnSaveMotivation"
+                    android:text="Simpan Motivasi"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#16A34A"
+                    android:minHeight="50dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    app:cornerRadius="12dp" />
+
+                <Button
+                    android:id="@+id/btnDeleteMotivation"
+                    android:text="Hapus Motivasi"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#DC2626"
+                    android:minHeight="50dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:cornerRadius="12dp" />
+
+                <Button
+                    android:id="@+id/btnClearMotivation"
+                    android:text="Kosongkan Form"
+                    android:textColor="#1D4ED8"
+                    android:backgroundTint="#E0ECFF"
+                    android:minHeight="50dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:cornerRadius="12dp" />
+
+                <Button
+                    android:id="@+id/btnBackMotivation"
+                    android:text="Kembali ke Dashboard"
+                    android:textColor="#334155"
+                    android:backgroundTint="#E2E8F0"
+                    android:minHeight="50dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:cornerRadius="12dp" />
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="5dp"
+            app:cardBackgroundColor="#FFFFFF"
+            android:layout_marginTop="16dp">
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:padding="18dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <Button
+                    android:id="@+id/btnRefreshMotivationList"
+                    android:text="Refresh Daftar Motivasi"
+                    android:textColor="#1D4ED8"
+                    android:backgroundTint="#E0ECFF"
+                    android:minHeight="48dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:cornerRadius="12dp" />
+
+                <TextView
+                    android:id="@+id/tvMotivationList"
+                    android:text="Daftar motivasi..."
+                    android:textColor="#334155"
+                    android:textSize="13sp"
+                    android:lineSpacingExtra="3dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp" />
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+    </LinearLayout>
+</ScrollView>

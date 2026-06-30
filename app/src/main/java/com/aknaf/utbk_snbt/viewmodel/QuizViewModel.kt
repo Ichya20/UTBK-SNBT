@@ -5,139 +5,256 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.aknaf.utbk_snbt.model.QuestionModel
+import com.aknaf.utbk_snbt.model.ScoreModel
+import com.aknaf.utbk_snbt.model.ScorePolicy
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
 class QuizViewModel : ViewModel() {
+
     private val db = FirebaseFirestore.getInstance()
 
     var allQuestions = mutableStateOf<List<QuestionModel>>(emptyList())
     var filteredQuestions = mutableStateOf<List<QuestionModel>>(emptyList())
+
+    var currentSubjectCode = mutableStateOf("")
     var currentIndex = mutableStateOf(0)
+
     var score = mutableStateOf(0)
+    var correctAnswers = mutableStateOf(0)
+    var wrongAnswers = mutableStateOf(0)
+    var totalQuestions = mutableStateOf(0)
+    var maxScore = mutableStateOf(0)
+    var percentage = mutableStateOf(0.0)
+
     var isQuizFinished = mutableStateOf(false)
     var selectedOption = mutableStateOf("")
     var isAnswered = mutableStateOf(false)
+    var isLoading = mutableStateOf(false)
+    var errorMessage = mutableStateOf<String?>(null)
 
     var timeLeft = mutableStateOf(600)
+
     private var timer: CountDownTimer? = null
+    private var scoreHasBeenSaved = false
 
     fun startQuiz(subjectCode: String) {
-        filteredQuestions.value = emptyList()
-        score.value = 0
-        currentIndex.value = 0
-        isQuizFinished.value = false
-        selectedOption.value = ""
-        isAnswered.value = false
-        timeLeft.value = 600
-        timer?.cancel()
+        resetQuizState(subjectCode)
 
         db.collection("dynamic_questions")
             .whereEqualTo("subject", subjectCode)
             .get()
             .addOnSuccessListener { result ->
-                // ─── DEBUG: Lihat raw data dari Firestore ───
-                result.documents.forEach { doc ->
-                    Log.d("QUIZ_DEBUG", "=== Document ID: ${doc.id} ===")
-                    Log.d("QUIZ_DEBUG", "  subject  : ${doc.getString("subject")}")
-                    Log.d("QUIZ_DEBUG", "  question : ${doc.getString("question")}")
-                    Log.d("QUIZ_DEBUG", "  optionA  : ${doc.getString("optionA")}")
-                    Log.d("QUIZ_DEBUG", "  optionB  : ${doc.getString("optionB")}")
-                    Log.d("QUIZ_DEBUG", "  optionC  : ${doc.getString("optionC")}")
-                    Log.d("QUIZ_DEBUG", "  optionD  : ${doc.getString("optionD")}")
-                    Log.d("QUIZ_DEBUG", "  optionE  : ${doc.getString("optionE")}")
-                    Log.d("QUIZ_DEBUG", "  answer   : ${doc.getString("answer")}")
-                }
+                val loadedQuestions = result.toObjects(
+                    QuestionModel::class.java
+                )
 
-                val list = result.toObjects(QuestionModel::class.java)
+                allQuestions.value = loadedQuestions
+                filteredQuestions.value = loadedQuestions.shuffled()
 
-                // ─── DEBUG: Lihat hasil mapping ke QuestionModel ───
-                list.forEach { q ->
-                    Log.d("QUIZ_DEBUG", "=== QuestionModel ===")
-                    Log.d("QUIZ_DEBUG", "  subject  : ${q.subject}")
-                    Log.d("QUIZ_DEBUG", "  question : ${q.question}")
-                    Log.d("QUIZ_DEBUG", "  answer   : [${q.answer}]") // kurung buat deteksi spasi tersembunyi
-                    Log.d("QUIZ_DEBUG", "  optionA  : [${q.optionA}]")
-                    Log.d("QUIZ_DEBUG", "  optionB  : [${q.optionB}]")
-                }
+                totalQuestions.value = loadedQuestions.size
+                maxScore.value =
+                    loadedQuestions.size * ScorePolicy.POINTS_PER_CORRECT
 
-                filteredQuestions.value = list.shuffled()
+                isLoading.value = false
 
-                if (list.isNotEmpty()) {
+                if (loadedQuestions.isNotEmpty()) {
                     startTimer()
+                } else {
+                    errorMessage.value =
+                        "Belum ada soal untuk subtes $subjectCode"
                 }
             }
-            .addOnFailureListener { e ->
-                Log.e("QUIZ_ERROR", "Gagal ambil soal: ${e.message}")
+            .addOnFailureListener { error ->
+                isLoading.value = false
+                errorMessage.value =
+                    "Gagal mengambil soal: ${error.message}"
+
+                Log.e(
+                    "QUIZ_ERROR",
+                    "Gagal mengambil soal",
+                    error
+                )
             }
+    }
+
+    fun submitAnswer() {
+        if (
+            isQuizFinished.value ||
+            isAnswered.value ||
+            selectedOption.value.isBlank()
+        ) {
+            return
+        }
+
+        val questions = filteredQuestions.value
+        val index = currentIndex.value
+
+        if (index !in questions.indices) return
+
+        val currentQuestion = questions[index]
+        val userAnswer = selectedOption.value.trim()
+        val correctAnswer = currentQuestion.answer.trim()
+
+        val isCorrect = userAnswer == correctAnswer
+
+        if (isCorrect) {
+            correctAnswers.value += 1
+            score.value =
+                correctAnswers.value * ScorePolicy.POINTS_PER_CORRECT
+        }
+
+        isAnswered.value = true
+
+        Log.d(
+            "QUIZ_ANSWER",
+            "Subject=${currentSubjectCode.value}, " +
+                "user=[$userAnswer], correct=[$correctAnswer], " +
+                "isCorrect=$isCorrect, score=${score.value}"
+        )
+    }
+
+    fun nextQuestion() {
+        if (!isAnswered.value || isQuizFinished.value) {
+            return
+        }
+
+        if (
+            currentIndex.value <
+            filteredQuestions.value.size - 1
+        ) {
+            currentIndex.value += 1
+            selectedOption.value = ""
+            isAnswered.value = false
+        } else {
+            finishQuiz()
+        }
+    }
+
+    fun resetAndRestartQuiz() {
+        val subjectCode = currentSubjectCode.value
+
+        if (subjectCode.isBlank()) {
+            return
+        }
+
+        startQuiz(subjectCode)
+    }
+
+    private fun resetQuizState(subjectCode: String) {
+        timer?.cancel()
+
+        currentSubjectCode.value = subjectCode
+        allQuestions.value = emptyList()
+        filteredQuestions.value = emptyList()
+
+        currentIndex.value = 0
+        score.value = 0
+        correctAnswers.value = 0
+        wrongAnswers.value = 0
+        totalQuestions.value = 0
+        maxScore.value = 0
+        percentage.value = 0.0
+
+        isQuizFinished.value = false
+        selectedOption.value = ""
+        isAnswered.value = false
+        isLoading.value = true
+        errorMessage.value = null
+
+        timeLeft.value = 600
+        scoreHasBeenSaved = false
     }
 
     private fun startTimer() {
         timer?.cancel()
-        timer = object : CountDownTimer(timeLeft.value * 1000L, 1000) {
+
+        timer = object : CountDownTimer(
+            timeLeft.value * 1000L,
+            1000L
+        ) {
             override fun onTick(millisUntilFinished: Long) {
-                timeLeft.value = (millisUntilFinished / 1000).toInt()
+                timeLeft.value =
+                    (millisUntilFinished / 1000L).toInt()
             }
+
             override fun onFinish() {
-                isQuizFinished.value = true
-                saveScoreToFirebase()
+                timeLeft.value = 0
+                finishQuiz()
             }
         }.start()
     }
 
-    fun submitAnswer() {
-        val currentSoal = filteredQuestions.value[currentIndex.value]
-        val userAnswer = selectedOption.value.trim()
-        val correctAnswer = currentSoal.answer.trim() // .trim() buat buang spasi tersembunyi
+    private fun finishQuiz() {
+        if (isQuizFinished.value) return
 
-        // ─── DEBUG: Bandingkan secara eksplisit ───
-        Log.d("QUIZ_ANSWER", "User pilih   : [$userAnswer]")
-        Log.d("QUIZ_ANSWER", "Jawaban benar: [$correctAnswer]")
-        Log.d("QUIZ_ANSWER", "Cocok?       : ${userAnswer == correctAnswer}")
+        timer?.cancel()
 
-        if (userAnswer == correctAnswer) {
-            score.value += 10
-            Log.d("QUIZ_ANSWER", "✅ BENAR! Skor sekarang: ${score.value}")
-        } else {
-            Log.d("QUIZ_ANSWER", "❌ SALAH")
-        }
-        isAnswered.value = true
-    }
+        val total = totalQuestions.value
+        val correct = correctAnswers.value
 
-    fun nextQuestion() {
-        if (currentIndex.value < filteredQuestions.value.size - 1) {
-            currentIndex.value++
-            selectedOption.value = ""
-            isAnswered.value = false
-        } else {
-            isQuizFinished.value = true
-            saveScoreToFirebase()
-        }
+        score.value =
+            correct * ScorePolicy.POINTS_PER_CORRECT
+
+        wrongAnswers.value =
+            (total - correct).coerceAtLeast(0)
+
+        maxScore.value =
+            total * ScorePolicy.POINTS_PER_CORRECT
+
+        percentage.value = ScorePolicy.calculatePercentage(
+            score = score.value,
+            maxScore = maxScore.value
+        )
+
+        isQuizFinished.value = true
+        saveScoreToFirebase()
     }
 
     private fun saveScoreToFirebase() {
-        val userId = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+        if (scoreHasBeenSaved) return
+        scoreHasBeenSaved = true
+
+        val userId = FirebaseAuth.getInstance()
+            .currentUser
+            ?.uid
             ?: "anonymous_user"
 
-        val currentSubject = filteredQuestions.value.firstOrNull()?.subject ?: "UNKNOWN"
-
-        val scoreData = com.aknaf.utbk_snbt.model.ScoreModel(
+        val scoreData = ScoreModel(
             userId = userId,
-            subject = currentSubject,
+            subject = currentSubjectCode.value,
             score = score.value,
+            correctAnswers = correctAnswers.value,
+            wrongAnswers = wrongAnswers.value,
+            totalQuestions = totalQuestions.value,
+            maxScore = maxScore.value,
+            percentage = percentage.value,
             timestamp = System.currentTimeMillis()
         )
 
-        db.collection("user_scores").add(scoreData)
+        db.collection("user_scores")
+            .add(scoreData)
             .addOnSuccessListener {
-                Log.d("FIREBASE_SCORE", "Skor berhasil disimpan: ${score.value} untuk $currentSubject")
+                Log.d(
+                    "FIREBASE_SCORE",
+                    "Skor tersimpan: ${score.value}/" +
+                        "${maxScore.value} untuk " +
+                        currentSubjectCode.value
+                )
             }
-            .addOnFailureListener { e ->
-                Log.e("FIREBASE_SCORE", "Gagal simpan skor: ${e.message}")
+            .addOnFailureListener { error ->
+                scoreHasBeenSaved = false
+
+                Log.e(
+                    "FIREBASE_SCORE",
+                    "Gagal menyimpan skor",
+                    error
+                )
             }
     }
 
     override fun onCleared() {
-        super.onCleared()
         timer?.cancel()
+        super.onCleared()
     }
 }

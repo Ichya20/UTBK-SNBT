@@ -30,83 +30,137 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.aknaf.utbk_snbt.model.ScorePolicy
+import com.aknaf.utbk_snbt.model.SubjectCatalog
 
 class SubjectSelectionScreen : Screen {
+
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.currentOrThrow
 
-        val subjects = listOf(
-            "Penalaran Umum" to "PU",
-            "Penget. Kuantitatif" to "PK",
-            "Penalaran Matematika" to "PM",
-            "Penget. & Pemahaman Umum" to "PPU",
-            "KMBM" to "KMBM",
-            "Literasi Bhs. Indonesia" to "LBI",
-            "Literasi Bhs. Inggris" to "LBE"
-        )
-
-        // PAKSA BACKGROUND LAYAR TERANG
         Surface(
             modifier = Modifier.fillMaxSize(),
             color = Color(0xFFF8F9FA)
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                // Judul Atas
+            Column(
+                modifier = Modifier.padding(20.dp)
+            ) {
                 Text(
                     text = "Simulasi UTBK-SNBT",
                     style = MaterialTheme.typography.headlineMedium,
-                    color = Color(0xFF2B2B6E), // Biru Tua
+                    color = Color(0xFF2B2B6E),
                     fontWeight = FontWeight.ExtraBold
                 )
 
                 Text(
-                    text = "Pilih sub-tes yang ingin kamu kerjakan sekarang:",
-                    color = Color.DarkGray, // 🚀 Teks abu-abu gelap
+                    text = "Pilih subtes yang ingin kamu kerjakan:",
+                    color = Color.DarkGray,
                     fontSize = 14.sp
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFEAF4FF)
+                    ),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Sistem penilaian latihan",
+                            color = Color(0xFF2B2B6E),
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(modifier = Modifier.height(5.dp))
+
+                        Text(
+                            text = "Setiap jawaban benar bernilai " +
+                                "${ScorePolicy.POINTS_PER_CORRECT} poin. " +
+                                "Hasil semua subtes terbaru akan dijumlahkan " +
+                                "di halaman Riwayat & Progress.",
+                            color = Color(0xFF333333),
+                            fontSize = 13.sp,
+                            lineHeight = 19.sp
+                        )
+
+                        Spacer(modifier = Modifier.height(5.dp))
+
+                        Text(
+                            text = "Status yang ditampilkan adalah target latihan, " +
+                                "bukan prediksi resmi kelulusan UTBK-SNBT.",
+                            color = Color(0xFF666666),
+                            fontSize = 11.sp,
+                            lineHeight = 16.sp
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
 
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement =
+                        Arrangement.spacedBy(12.dp)
                 ) {
-                    items(subjects) { (name, code) ->
-                        // --- [FIX: KARTU PILIHAN MATERI] ---
+                    items(
+                        items = SubjectCatalog.subjects,
+                        key = { it.code }
+                    ) { subject ->
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { navigator.push(DynamicQuizScreen(code)) },
+                                .clickable {
+                                    navigator.push(
+                                        DynamicQuizScreen(subject.code)
+                                    )
+                                },
                             colors = CardDefaults.cardColors(
-                                containerColor = Color.White // 🚀 PAKSA KARTU PUTIH
+                                containerColor = Color.White
                             ),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                            elevation = CardDefaults.cardElevation(
+                                defaultElevation = 4.dp
+                            ),
                             shape = RoundedCornerShape(16.dp)
                         ) {
                             Row(
-                                modifier = Modifier.padding(20.dp).fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                modifier = Modifier
+                                    .padding(20.dp)
+                                    .fillMaxWidth(),
+                                verticalAlignment =
+                                    Alignment.CenterVertically,
+                                horizontalArrangement =
+                                    Arrangement.SpaceBetween
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
+                                Column(
+                                    modifier = Modifier.weight(1f)
+                                ) {
                                     Text(
-                                        text = name,
-                                        style = MaterialTheme.typography.bodyLarge,
+                                        text = subject.name,
+                                        style = MaterialTheme
+                                            .typography
+                                            .bodyLarge,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color.Black // 🚀 FIX: PAKSA TULISAN HITAM
+                                        color = Color.Black
                                     )
+
                                     Text(
-                                        text = "Start Questions",
+                                        text = "Mulai latihan • ${subject.code}",
                                         fontSize = 12.sp,
-                                        color = Color.Gray // 🚀 Teks keterangan abu-abu
+                                        color = Color.Gray
                                     )
                                 }
 
                                 Icon(
-                                    imageVector = Icons.Default.ArrowForward,
+                                    imageVector =
+                                        Icons.Default.ArrowForward,
                                     contentDescription = null,
-                                    tint = Color(0xFF2B2B6E) // Icon warna biru tua
+                                    tint = Color(0xFF2B2B6E)
                                 )
                             }
                         }

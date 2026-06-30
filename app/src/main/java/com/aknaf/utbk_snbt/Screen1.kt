@@ -48,12 +48,17 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import com.aknaf.utbk_snbt.screen.ScoreHistoryScreen
 import com.aknaf.utbk_snbt.screen.SubjectSelectionScreen
 import com.aknaf.utbk_snbt.viewmodel.MotivationViewModel
+import android.app.Activity
+import android.widget.Toast
+import com.aknaf.utbk_snbt.ads.BannerAdView
+import com.aknaf.utbk_snbt.ads.RewardedAdManager
 
 class Screen1 : Screen {
     @Composable
     override fun Content() {
         val navigator = LocalNavigator.current
         val context = androidx.compose.ui.platform.LocalContext.current
+        val activity = context as? Activity
 
         val motivationVm: MotivationViewModel = viewModel()
 
@@ -63,6 +68,7 @@ class Screen1 : Screen {
         // 🚀 TRIGGER: Setiap kali layar Home muncul (Unit), paksa ViewModel nyari quote baru
         LaunchedEffect(Unit) {
             motivationVm.fetchRandomQuote()
+            RewardedAdManager.load(context)
         }
 
         Box(modifier = Modifier.fillMaxSize()) {
@@ -194,6 +200,13 @@ class Screen1 : Screen {
                     }
                 }
 
+                // --- ADMOB BANNER ---
+                item {
+                    BannerAdView(
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
                 // --- BAGIAN GRID MENU (Sama kayak lama) ---
                 item {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -302,6 +315,37 @@ class Screen1 : Screen {
                         ) {
                             Text("Log Out", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         }
+                    }
+                }
+
+                // --- REWARDED ADS BUTTON ---
+                item {
+                    Button(
+                        onClick = {
+                            if (activity != null) {
+                                RewardedAdManager.show(
+                                    activity = activity,
+                                    onRewardEarned = {
+                                        Toast.makeText(context, "Bonus berhasil dibuka!", Toast.LENGTH_SHORT).show()
+                                    },
+                                    onAdClosed = {}
+                                )
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(55.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2B2B6E)
+                        ),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Text(
+                            text = "🎁 Buka Bonus dengan Iklan",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
                     }
                 }
 
